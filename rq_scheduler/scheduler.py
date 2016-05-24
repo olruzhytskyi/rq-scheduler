@@ -36,7 +36,7 @@ class Scheduler(object):
         )
 
     @property
-    def scheduler_jobs_key(self):
+    def scheduled_jobs_key(self):
         return (
             '{}:{}'.format(self.namespace, self._scheduler_jobs_key)
             if self.namespace else self._scheduler_jobs_key
@@ -332,7 +332,6 @@ class Scheduler(object):
         Move scheduled jobs into queues.
         """
         self.log.info('Checking for scheduled jobs...')
-        import pdb; pdb.set_trace()
 
         jobs = self.get_jobs_to_queue()
         for job in jobs:
