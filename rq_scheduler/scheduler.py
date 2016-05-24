@@ -17,15 +17,30 @@ logger = logging.getLogger(__name__)
 
 
 class Scheduler(object):
-    scheduler_key = 'rq:scheduler'
-    scheduled_jobs_key = 'rq:scheduler:scheduled_jobs'
+    _scheduler_key = 'rq:scheduler'
+    _scheduled_jobs_key = 'rq:scheduler:scheduled_jobs'
 
-    def __init__(self, queue_name='default', interval=60, connection=None):
+    def __init__(self, queue_name='default', interval=60, connection=None, namespace=None):
         from rq.connections import resolve_connection
         self.connection = resolve_connection(connection)
         self.queue_name = queue_name
+        self.namespace = namespace
         self._interval = interval
         self.log = logger
+
+    @property
+    def scheduler_key(self):
+        return (
+            '{}:{}'.format(self.namespace, self._scheduler_key)
+            if self.namespace else self._scheduler_key
+        )
+
+    @property
+    def scheduler_jobs_key(self):
+        return (
+            '{}:{}'.format(self.namespace, self._scheduler_jobs_key)
+            if self.namespace else self._scheduler_jobs_key
+        )
 
     def register_birth(self):
         if self.connection.exists(self.scheduler_key) and \
@@ -76,7 +91,7 @@ class Scheduler(object):
         if kwargs is None:
             kwargs = {}
         job = Job.create(func, args=args, connection=self.connection,
-                         kwargs=kwargs, result_ttl=result_ttl, ttl=ttl, id=id, description=description)
+                         kwargs=kwargs, result_ttl=result_ttl, ttl=ttl, id=id, description=description, namespace=self.namespace)
         job.origin = queue_name or self.queue_name
         if commit:
             job.save()
@@ -247,7 +262,7 @@ class Scheduler(object):
         for job_id, sched_time in job_ids:
             job_id = job_id.decode('utf-8')
             try:
-                job = Job.fetch(job_id, connection=self.connection)
+                job = Job.fetch(job_id, connection=self.connection, namespace=self.namespace)
                 if with_times:
                     jobs.append((job, sched_time))
                 else:
@@ -270,8 +285,11 @@ class Scheduler(object):
         """
         Returns a queue to put job into.
         """
-        key = '{0}{1}'.format(Queue.redis_queue_namespace_prefix, job.origin)
-        return Queue.from_queue_key(key, connection=self.connection)
+        if self.namespace is not None:
+            key = '{0}:{1}{2}'.format(self.namespace, Queue.redis_queue_namespace_prefix, job.origin)
+        else:
+            key = '{0}{1}'.format(Queue.redis_queue_namespace_prefix, job.origin)
+        return Queue.from_queue_key(key, connection=self.connection, namespace=self.namespace)
 
     def enqueue_job(self, job):
         """
@@ -314,6 +332,7 @@ class Scheduler(object):
         Move scheduled jobs into queues.
         """
         self.log.info('Checking for scheduled jobs...')
+        import pdb; pdb.set_trace()
 
         jobs = self.get_jobs_to_queue()
         for job in jobs:

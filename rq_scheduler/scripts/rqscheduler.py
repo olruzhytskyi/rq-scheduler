@@ -25,18 +25,19 @@ def main():
             queue (in seconds, can be floating-point for more precision).")
     parser.add_argument('--path', default='.', help='Specify the import path.')
     parser.add_argument('--pid', help='A filename to use for the PID file.', metavar='FILE')
-    
+    parser.add_argument('--namespace', help='Namespace for keys in redis (prepended as prefix: <namespace>:<key>)')
+
     args = parser.parse_args()
-    
+
     if args.path:
         sys.path = args.path.split(':') + sys.path
-    
+
     if args.pid:
         pid = str(os.getpid())
         filename = args.pid
         with open(filename, 'w') as f:
             f.write(pid)
-    
+
     if args.url is not None:
         connection = Redis.from_url(args.url)
     else:
@@ -48,7 +49,7 @@ def main():
         level = 'INFO'
     setup_loghandlers(level)
 
-    scheduler = Scheduler(connection=connection, interval=args.interval)
+    scheduler = Scheduler(connection=connection, interval=args.interval, namespace=args.namespace)
     scheduler.run()
 
 if __name__ == '__main__':
