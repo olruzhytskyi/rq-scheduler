@@ -31,15 +31,15 @@ class Scheduler(object):
     @property
     def scheduler_key(self):
         return (
-            '{}:{}'.format(self.namespace, self._scheduled_key)
+            '{}:{}'.format(self.namespace, self._scheduler_key)
             if self.namespace else self._scheduler_key
         )
 
     @property
     def scheduled_jobs_key(self):
         return (
-            '{}:{}'.format(self.namespace, self._scheduler_jobs_key)
-            if self.namespace else self._scheduler_jobs_key
+            '{}:{}'.format(self.namespace, self._scheduled_jobs_key)
+            if self.namespace else self._scheduled_jobs_key
         )
 
     def register_birth(self):
