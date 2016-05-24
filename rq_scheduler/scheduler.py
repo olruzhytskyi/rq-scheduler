@@ -31,7 +31,7 @@ class Scheduler(object):
     @property
     def scheduler_key(self):
         return (
-            '{}:{}'.format(self.namespace, self._scheduler_key)
+            '{}:{}'.format(self.namespace, self._scheduled_key)
             if self.namespace else self._scheduler_key
         )
 
